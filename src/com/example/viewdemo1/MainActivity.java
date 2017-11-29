@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import org.json.JSONObject;
+
 import com.example.httppost.HttpUtils;
 import com.example.json.JsonParse;
 
@@ -21,6 +23,7 @@ import android.util.Log;
 //	private Random random = new Random();
 	private Handler mHandler;
 	private Thread thread;
+	//"http://192.168.1.119:8080/transportservice/type/jason/action/GetAllSense.do"
 	private final String URL = "http://192.168.1.119:8080/transportservice/type/jason/action/GetAllSense.do";
 	private LinkedList<String> mList;
     @Override
@@ -31,8 +34,8 @@ import android.util.Log;
         	public void handleMessage(Message msg){
         		if (msg.what == 0x123) {
 					Bundle bundle = msg.getData();
-//					Log.i("TAG","------------->"+bundle.getString("text"));
-					//String r = random.nextInt(4)*100+"";
+					Log.i("TAG","------------->"+bundle.getString("text"));
+//					String r = random.nextInt(4)*100+"";
 					if (mList.size()<7) {
 						mList.add(bundle.getString("text"));
 						chartView.setInfo(new String[]{"0","1","2","3","4","5","6"},   //X轴刻度  
@@ -58,13 +61,13 @@ import android.util.Log;
     }
     @Override
     protected void onResume() {
-     /**
-      * 设置为横屏
-      */
-    if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE){
-    	setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-    }
-     super.onResume(); 
+	     /**
+	      * 设置为横屏
+	      */
+	    if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE){
+	    	setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+	    }
+	     super.onResume(); 
     }
     public void initData(){
     	chartView = new ChartView(MainActivity.this);
@@ -77,7 +80,9 @@ import android.util.Log;
 			public void run() {
 				
 				while(!Thread.currentThread().isInterrupted()){
-					String json_str = HttpUtils.HttpPost(URL);
+					//String json = "{\"CarId\":" + 2 + "}";
+					String json_str = HttpUtils.HttpPost(URL,null);
+					Log.i("TAG1","--------->"+json_str);
 					try {
 					List<String> list = JsonParse.Parse(json_str);
 					Message message = new Message();

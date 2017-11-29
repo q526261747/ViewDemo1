@@ -3,6 +3,9 @@ package com.example.httppost;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -18,7 +21,7 @@ import android.text.InputFilter.LengthFilter;
 import android.util.Log;
 
 public class HttpUtils {
-	public static String HttpPost(String url){
+	public static String HttpPost(String url,String params){
 //		String res = null;
 //		HttpClient client = new DefaultHttpClient();
 //		HttpPost post = new HttpPost(url);
@@ -40,20 +43,43 @@ public class HttpUtils {
 //		
 //		return res;
 	ByteArrayOutputStream bao = new ByteArrayOutputStream();
+	HttpURLConnection connection = null;
 	try {
-		URL mUrl = new URL(url);
-		HttpURLConnection connection = (HttpURLConnection) mUrl.openConnection();
+		
+	    connection = (HttpURLConnection) new URL(url).openConnection();
+		connection.setRequestMethod("POST");
+		
+		//connection.setDoInput(true);
+		connection.setUseCaches(false);
+		
+		connection.setRequestProperty("Content-Type", "application/json");
+		connection.setDoOutput(true);
+		connection.setConnectTimeout(50000);
+		//connection.connect();
+		if(params!=null){
+			OutputStream os = connection.getOutputStream();
+			os.write(params.getBytes("utf-8"));
+			os.flush();
+		}
 		InputStream is = connection.getInputStream();
-		byte[] data = new byte[1024];
+		if (connection.getResponseCode() == 200) {
+			byte[] data = new byte[1024];
 		int len = 0;
 		while((len=is.read(data))!=-1){
 			bao.write(data, 0, len);
 		}
 		is.close();
-	} catch (IOException e) {
+		
+		}else{
+			Log.i("--log-->","shibai");
+		}
+		
+		
+	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
+	
 	return new String(bao.toByteArray());
 	}
 }
