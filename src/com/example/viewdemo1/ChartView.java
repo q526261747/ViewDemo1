@@ -2,20 +2,29 @@ package com.example.viewdemo1;
 
 import java.util.LinkedList;
 
-import android.R.integer;
+import com.example.notification.NotificationActivity;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
+import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 public class ChartView extends View {
-
-	private Paint paint,paintText,paintPoint,paintTitle;
 	
-	private int mXPoint = 60;
+	private Handler mHandler = new Handler();
+	private Thread thread;
+	private boolean exit=false;
+	private Paint paint;
+	private Paint paintText;
+	private Paint paintPoint;
+	private Paint paintTitle;
+	private Paint paintData;
+	
+	private int mXPoint = 50;
 	private int mYPoint = 200;
 	private int mXScale = 45;
 	private int mYScale = 50;
@@ -27,20 +36,22 @@ public class ChartView extends View {
 	private LinkedList<String> mData = new LinkedList<String>();
 	private String mTitle = null;
 	
+	private int mRange=0; 
+	
+    public void setRange(int range) {  
+        mRange = range;  
+    }  
 	public ChartView(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
-		// TODO Auto-generated constructor stub
 	}
 	
 	public ChartView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		initData();
-		// TODO Auto-generated constructor stub
 	}
 	
 	public ChartView(Context context) {
 		super(context);
-		// TODO Auto-generated constructor stub
 	}
 	public void setInfo( String[] mXLabel, String[] mYLabel,LinkedList<String> mData, String mTitle) {
 		this.mXLabel = mXLabel;
@@ -49,11 +60,12 @@ public class ChartView extends View {
 		this.mTitle = mTitle;
 	}
 	private void initData(){
+		
 		paint = new Paint();
 		paint.setStyle(Paint.Style.STROKE);
 		paint.setAntiAlias(true);
 		paint.setStrokeWidth(2);
-		paint.setColor(Color.DKGRAY);
+		paint.setColor(Color.BLUE);
 		paint.setTextSize(12);
 		
 		paintPoint = new Paint();
@@ -65,13 +77,17 @@ public class ChartView extends View {
 		paintText.setStyle(Paint.Style.STROKE);
 		paintText.setAntiAlias(true);
 		paintText.setTextSize(12);
-		paintText.setColor(Color.DKGRAY);
+		
+		paintData = new Paint();
+		paintData.setStyle(Paint.Style.STROKE);
+		paintData.setAntiAlias(true);
+		paintData.setTextSize(12);
 		
 		paintTitle = new Paint();
-		paintTitle.setStyle(Paint.Style.STROKE);
+		paintTitle.setStyle(Paint.Style.FILL);
 		paintTitle.setAntiAlias(true);
-		paintTitle.setTextSize(16);
-		paintTitle.setColor(Color.DKGRAY);
+		paintTitle.setTextSize(18);
+		paintTitle.setColor(Color.BLACK);
 	}
 	@Override
 	protected void onDraw(Canvas canvas) {
@@ -98,14 +114,53 @@ public class ChartView extends View {
 			if(i>0&&YCoord(mData.get(i-1))!=-999&&YCoord(mData.get(i))!=-999){
 				canvas.drawLine(mXPoint+(i-1)*mXScale, YCoord(mData.get(i-1)), mXPoint+i*mXScale, YCoord(mData.get(i)), paint);
 			}
+			//警戒值设置
+			if(Float.parseFloat(mData.get(i))>=mRange) { 
+				//颜色
+            	paintPoint.setColor(Color.parseColor("#FF0000"));  
+            	paintData.setColor(Color.parseColor("#FF0000"));
+            	exit = true;
+            	//if(Thread.currentThread().isInterrupted()||thread==null){
+            		setThread();
+            	//}
+            }else {
+            	exit = false;
+//            	if(!Thread.currentThread().isInterrupted()){
+//            	Thread.currentThread().interrupt();
+//            	}
+				paintPoint.setColor(Color.GREEN);
+				paintData.setColor(Color.GREEN);
+			}
 			canvas.drawText(mData.get(i), mXPoint+i*mXScale, YCoord(mData.get(i))-15, paintText);
 			canvas.drawCircle(mXPoint+i*mXScale, YCoord(mData.get(i)), 6, paintPoint);
 		}
-		canvas.drawText(mTitle, 200, 20, paintTitle);
+		canvas.drawText(mTitle, 190, 20, paintTitle);
 	}
 	private int caculatemXscale(){
 		mXScale = mXLength/6;
 		return mXScale;
+	}
+	public void setHandler(Handler handler){
+		this.mHandler = handler;
+	}
+	public void setThread(){
+		thread = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				
+				try {
+					while(exit){
+					//Log.i("TAG!","------------------>hh");
+					mHandler.sendEmptyMessage(0x111);
+					exit = false;
+					}
+				} catch (Exception e) {
+					// TODO: handle exception
+				}
+			}
+		});
+		thread.start();
 	}
 	private float YCoord(String y0){
 		float y;
@@ -115,6 +170,7 @@ public class ChartView extends View {
 			return -999;
 		}
 		try {
+			//计算y坐标在画布上显示的位置
 			return mYPoint-y*mYScale/Integer.parseInt(mYLabel[1]);
 		} catch (Exception e) {
 			// TODO: handle exception
